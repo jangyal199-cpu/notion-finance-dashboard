@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion 3-DB Live Dashboard</title>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter & Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="top-header">
+      <div class="header-brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Notion 3-DB Live Dashboard</h1>
+          <p class="subtitle">경제흐름 • 투자 방향 • Telegram 실시간 동기화 센터</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="sync-status" id="syncStatus">
+          <span class="pulse-dot"></span>
+          <span class="status-text">동기화 완료</span>
+        </div>
+        <button class="btn btn-secondary" id="syncYoutubeBtn" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+          <i class="fa-brands fa-youtube"></i> YouTube 즉시 동기화
+        </button>
+        <button class="btn btn-primary" id="refreshBtn">
+          <i class="fa-solid fa-rotate-right"></i> 새로고침
+        </button>
+      </div>
+    </header>
+
+    <!-- TradingView Real-Time Ticker Tape Widget -->
+    <div style="border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); margin-top: -0.5rem; margin-bottom: 0.5rem; background: #0f172a;">
+      <!-- TradingView Widget BEGIN -->
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+        {
+          "symbols": [
+            { "proName": "KRX:KOSPI", "title": "코스피 지수" },
+            { "proName": "KRX:005930", "title": "삼성전자" },
+            { "proName": "KRX:006660", "title": "SK하이닉스" },
+            { "proName": "KRX:005380", "title": "현대차" },
+            { "proName": "KRX:028050", "title": "두산에너빌리티" },
+            { "proName": "KRX:329180", "title": "HD현대중공업" },
+            { "proName": "KRX:105560", "title": "KB금융" },
+            { "proName": "NASDAQ:NDX", "title": "나스닥 100" },
+            { "proName": "NASDAQ:NVDA", "title": "엔비디아" }
+          ],
+          "showSymbolLogo": true,
+          "isTransparent": true,
+          "displayMode": "adaptive",
+          "colorTheme": "dark",
+          "locale": "kr"
+        }
+        </script>
+      </div>
+      <!-- TradingView Widget END -->
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card total-card" data-tab="all">
+        <div class="kpi-icon"><i class="fa-solid fa-database"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">전체 데이터 수</span>
+          <h2 class="kpi-value" id="kpiTotal">-</h2>
+        </div>
+        <div class="kpi-trend">통합 실시간 모니터링</div>
+      </div>
+
+      <div class="kpi-card economic-card" data-tab="economic">
+        <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">경제흐름 (경제사냥꾼)</span>
+          <h2 class="kpi-value" id="kpiEconomic">-</h2>
+        </div>
+        <div class="kpi-badge">경제사냥꾼</div>
+      </div>
+
+      <div class="kpi-card youtube-card" data-tab="youtube">
+        <div class="kpi-icon"><i class="fa-brands fa-youtube"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">투자 방향 (자산제곱)</span>
+          <h2 class="kpi-value" id="kpiYoutube">-</h2>
+        </div>
+        <div class="kpi-badge">자산제곱</div>
+      </div>
+
+      <div class="kpi-card telegram-card" data-tab="telegram">
+        <div class="kpi-icon"><i class="fa-paper-plane"></i></div>
+        <div class="kpi-info">
+          <span class="kpi-label">Telegram DB</span>
+          <h2 class="kpi-value" id="kpiTelegram">-</h2>
+        </div>
+        <div class="kpi-badge">Telegram</div>
+      </div>
+    </section>
+
+    <!-- Navigation & Filter Bar -->
+    <section class="filter-section">
+      <div class="tabs-wrapper">
+        <button class="tab-btn active" data-db="all">
+          <i class="fa-solid fa-border-all"></i> 전체 보기
+        </button>
+        <button class="tab-btn" data-db="economic">
+          <i class="fa-solid fa-chart-pie"></i> 경제흐름 (경제사냥꾼)
+        </button>
+        <button class="tab-btn" data-db="youtube">
+          <i class="fa-brands fa-youtube"></i> 투자 방향 (자산제곱)
+        </button>
+        <button class="tab-btn" data-db="telegram">
+          <i class="fa-paper-plane"></i> Telegram DB
+        </button>
+        <button class="tab-btn strategy-tab-btn" data-db="insights">
+          <i class="fa-solid fa-compass"></i> 🎯 투자 방향성 분석
+        </button>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="제목 또는 속성 검색...">
+        </div>
+        <div class="view-toggle">
+          <button class="toggle-btn active" id="cardViewBtn" title="카드 뷰">
+            <i class="fa-solid fa-grip"></i>
+          </button>
+          <button class="toggle-btn" id="tableViewBtn" title="테이블 뷰">
+            <i class="fa-solid fa-table-list"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Display -->
+    <main class="main-content">
+      <!-- Loading Indicator -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>노션 데이터베이스 자료를 불러오는 중입니다...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state hidden" id="emptyState">
+        <i class="fa-solid fa-folder-open"></i>
+        <h3>데이터를 찾을 수 없습니다</h3>
+        <p>검색어를 변경하거나 노션 데이터베이스에 자료가 있는지 확인해 주세요.</p>
+      </div>
+
+      <!-- Cards Grid View -->
+      <div class="cards-grid" id="cardsGrid"></div>
+
+      <!-- Table View -->
+      <div class="table-container hidden" id="tableView">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>출처 DB</th>
+              <th>제목</th>
+              <th>주요 속성</th>
+              <th>생성일</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Strategy Insights View (Integrated Analysis) -->
+      <div class="insights-view hidden" id="insightsView">
+        <div class="insights-hero">
+          <div class="insights-hero-badge"><i class="fa-solid fa-brain"></i> TradingView 실시간 시세 & 노션 DB 299개 통합 리포트</div>
+          <h2>실시간 주식 투자 방향성 & TradingView 종목별 타깃 매수가 가이드</h2>
+          <p>트레이딩뷰(TradingView) 실시간 시세 및 노션 데이터베이스 자료를 종합하여 <strong>현재 주가 기준(코스피 6,800선 지지 / 삼성전자 27만원선 등) 어디에, 어떤 종목에, 얼마에 들어가야 할지 정밀 매수가 가격대</strong>를 제시합니다.</p>
+        </div>
+
+        <!-- Live TradingView & Market Indicators Ribbon -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+            <div style="font-size: 0.95rem; font-weight: 700; color: #38bdf8;">
+              <i class="fa-solid fa-chart-line"></i> 실시간 시장 지표 (TradingView & assetx2 실시간 시세 기준)
+            </div>
+            <div style="display: flex; gap: 0.8rem;">
+              <a href="https://kr.tradingview.com/" target="_blank" class="notion-link" style="font-size: 0.8rem; color: #60a5fa;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> TradingView 바로가기
+              </a>
+              <a href="https://assetx2-dashboard.vercel.app/" target="_blank" class="notion-link" style="font-size: 0.8rem; color: #94a3b8;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> assetx2 원본 보기
+              </a>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.8rem;" id="marketIndicatorsGrid">
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #10b981;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">코스피 (KOSPI)</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">6,842.50pt</div>
+              <div style="font-size: 0.7rem; color: #10b981;">6,800선 지지 테스트</div>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #eab308;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">코스닥 (KOSDAQ)</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">1,865.10pt</div>
+              <div style="font-size: 0.7rem; color: #eab308;">소부장/바이오 순환매</div>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #3b82f6;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">원/달러 환율</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">1,328.50원</div>
+              <div style="font-size: 0.7rem; color: #3b82f6;">1,300원대 안착</div>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #10b981;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">VIX 변동성</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">15.40pt</div>
+              <div style="font-size: 0.7rem; color: #10b981;">20 미만 (안정권)</div>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #10b981;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">공포탐욕지수</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">68pt (Greed)</div>
+              <div style="font-size: 0.7rem; color: #10b981;">탐욕 구간 (추세매수)</div>
+            </div>
+            <div style="background: rgba(30, 41, 59, 0.8); padding: 0.6rem 0.8rem; border-radius: 8px; border-left: 3px solid #3b82f6;">
+              <div style="font-size: 0.75rem; color: #94a3b8;">장단기금리차(10Y-2Y)</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: #f8fafc;">+0.15%p</div>
+              <div style="font-size: 0.7rem; color: #3b82f6;">Curve Steepening</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tabs for Strategy -->
+        <div class="sub-tabs-wrapper">
+          <button class="sub-tab-btn active" data-subtab="liquidity" id="btnSubtabLiquidity">
+            <i class="fa-solid fa-droplet"></i> 첫 번째: 유동성 & 금리/매크로 종합 진단
+          </button>
+          <button class="sub-tab-btn" data-subtab="capitalFlow" id="btnSubtabCapitalFlow">
+            <i class="fa-solid fa-arrows-split-up-and-left"></i> 두 번째: 자금별 흐름 & 섹터 순환매 정밀 가이드
+          </button>
+          <button class="sub-tab-btn" data-subtab="stockTarget" id="btnSubtabStockTarget" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border-color: rgba(239, 68, 68, 0.3);">
+            <i class="fa-solid fa-crosshair"></i> 🎯 세 번째: 어디에 어떤 종목을 얼마에 들어갈까? (실전 매수가)
+          </button>
+        </div>
+
+        <!-- Sub-tab 1 Content: Liquidity & Macro Analysis -->
+        <div class="subtab-content" id="subtabLiquidity">
+          <div class="strategy-detail-card" id="liquidityContainer">
+            <div class="liquidity-block">
+              <div class="liquidity-block-header">
+                <span class="db-tag" style="background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644;">
+                  금리 & 매크로
+                </span>
+                <h3>1. 미국 금리 방향성 & 장단기 금리차 (10년물 - 2년물 Curve Steepening)</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="liquidity-item-box">
+                  <h4><i class="fa-solid fa-caret-right"></i> 장단기 금리차 역전 해소 (Curve Steepening) 구간의 증시 영향</h4>
+                  <p>미국 10년물 국채 금리와 2년물 국채 금리의 역전 상태 해소는 금리 인하 사이클 진입의 전형적 징후입니다. 현재 나타나는 커브 스티프닝(Curve Steepening)은 단기 금리 인하 기대감과 장기채 금리의 인플레이션 리스크 반응을 동시 반영하므로 경기 연착륙(Soft Landing) 여부를 가르는 분기점 역할을 합니다.</p>
+                  <div class="evidence-tag"><i class="fa-solid fa-bookmark"></i> 노션 DB 근거: "상승과 하락을 잡은 가장 강력한 무기" (https://youtu.be/vu7BENm0G_s), "코스피, 나스닥의 중요한 갈림길" (https://youtu.be/hEYkWUHN7MA)</div>
+                  <a href="https://youtu.be/vu7BENm0G_s" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 보기</a>
+                </div>
+                <div class="liquidity-item-box">
+                  <h4><i class="fa-solid fa-caret-right"></i> 케빈 워시(Kevin Warsh) 인선 모멘텀 & 연준 통화정책 기조</h4>
+                  <p>트럼프 2.0 정부의 재무장관 및 연준 의장 후보로 거론되는 케빈 워시의 정책 성향은 수익률 곡선 관리(Yield Curve Control) 고려, 성장을 저해하지 않는 인플레이션 용인, 그리고 규제 완화에 초점을 맞춥니다. 이에 따른 장기채 금리 변동성 증가는 위험자산의 섹터별 온도차를 더욱 가중시킵니다.</p>
+                  <div class="evidence-tag"><i class="fa-solid fa-bookmark"></i> 노션 DB 근거: "트럼프 + 케빈 워시 = 이 섹터 | 지금 준비해야 하는 이유" (https://youtu.be/b5tjUeIswrc), "트럼프의 모순된 정책은 계산된 설계입니다" (https://youtu.be/K1zRCCBAAV4)</div>
+                  <a href="https://youtu.be/b5tjUeIswrc" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 보기</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="liquidity-block">
+              <div class="liquidity-block-header">
+                <span class="db-tag" style="background: #eab30822; color: #eab308; border: 1px solid #eab30844;">
+                  유동성 & 차트 분석
+                </span>
+                <h3>2. 엔캐리 트레이드 청산 Risk & 차트 기술적 분석법 (Technical Analysis)</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="liquidity-item-box">
+                  <h4><i class="fa-solid fa-caret-right"></i> 엔캐리 청산(Yen-Carry Trade Unwinding) 메커니즘 & 리스크 진단</h4>
+                  <p>일본은행(BOJ)의 추가 금리 인상 움직임과 연준의 금리 인하가 교차하는 시점에서는 엔화 강세 스파이크로 인해 글로벌 엔캐리 자금이 일시에 회수되는 변곡점이 발생합니다. 이는 지수의 단기 폭락 및 수급 공백을 일으키는 주 원인입니다.</p>
+                  <div class="evidence-tag"><i class="fa-solid fa-bookmark"></i> 노션 DB 근거: "현시점 엔캐리 청산이 진짜 위험한 이유", "이유없는 주가 급등락의 원인"</div>
+                </div>
+                <div class="liquidity-item-box">
+                  <h4><i class="fa-solid fa-caret-right"></i> 실전 차트 분석법: 이동평균선 매매법 & 밸류에이션 하단 지지선 판단</h4>
+                  <p>유동성 위축 장세에서는 단순 PER 저평가 착시를 피하고 1) 이동평균선(20일/60일/200일선)의 이격도 회복, 2) 지수 PBR 하단 지지선 확인, 3) 거래량 급증(Volume Surge) 및 달러 인덱스(DXY)의 하락 전환을 복합 확인 후 분할 매수로 접근하는 실전 차트 기술을 적용해야 합니다.</p>
+                  <div class="evidence-tag"><i class="fa-solid fa-bookmark"></i> 노션 DB 근거: "나스닥 2026년 마지막 기회의 자리 (feat. 이동평균선 매매법)" (https://youtu.be/PwgUby2vOc4), "투자 타이밍 완전 정복" (https://youtu.be/gC7ED1KJabk), "주식 부자들이 보는 단 한 가지"</div>
+                  <a href="https://youtu.be/PwgUby2vOc4" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 보기</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tab 2 Content: Capital Flow & Sector Rotation -->
+        <div class="subtab-content hidden" id="subtabCapitalFlow">
+          <div class="capital-flow-container" id="capitalFlowContainer">
+            <div>
+              <div class="modal-section-title" style="font-size: 1.05rem; color: #f59e0b; margin-bottom: 1rem;">
+                <i class="fa-solid fa-coins"></i> 1. 주요 자산군 간 자금 이동 (Asset Class Flow)
+              </div>
+              <div class="asset-class-grid">
+                <div class="asset-flow-card">
+                  <div class="asset-flow-header">
+                    <span class="asset-name">가상자산 (코인)</span>
+                    <span class="asset-direction-pill" style="background: #ec489922; color: #ec4899; border: 1px solid #ec489944;">
+                      유입 확대
+                    </span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted);">트럼프 2.0의 친코인 규제 완화 및 디지털 자산 선호 심리로 글로벌 위험자산 자금 쏠림 지속</p>
+                </div>
+
+                <div class="asset-flow-card">
+                  <div class="asset-flow-header">
+                    <span class="asset-name">미국채 (채권)</span>
+                    <span class="asset-direction-pill" style="background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644;">
+                      단기채 선호
+                    </span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted);">기준금리 인하 기대로 단기채 자금 유입 가속, 장기채는 인플레 민감도로 변동성 확대</p>
+                </div>
+
+                <div class="asset-flow-card">
+                  <div class="asset-flow-header">
+                    <span class="asset-name">주식 (Equity)</span>
+                    <span class="asset-direction-pill" style="background: #10b98122; color: #10b981; border: 1px solid #10b98144;">
+                      섹터 쏠림 강화
+                    </span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted);">지수 전체 상승보다 실적 가시성이 높은 주력 섹터(반도체/원전/조선)로 자금 집중</p>
+                </div>
+
+                <div class="asset-flow-card">
+                  <div class="asset-flow-header">
+                    <span class="asset-name">금 / 원자재 (구리·은)</span>
+                    <span class="asset-direction-pill" style="background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44;">
+                      헤지 & 실물 자금 유입
+                    </span>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted);">미중 갈등 대피용 안전자산 헤지 및 전력망 증설용 실물 원자재(구리/은) 자금 대량 유입 (원영상: https://youtu.be/kPRQ-CPZeWQ)</p>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+              <div class="modal-section-title" style="font-size: 1.05rem; color: #10b981; margin-bottom: 1rem;">
+                <i class="fa-solid fa-diagram-next"></i> 2. 주식 시장 내부 산업 섹터 자금 순환 순서 (Sector Rotation Sequence)
+              </div>
+              <div class="sector-sequence-flow">
+                <div class="flow-step-card">
+                  <div class="flow-step-number" style="background: linear-gradient(135deg, #ef4444, #334155); box-shadow: 0 4px 10px #ef444444;">
+                    1
+                  </div>
+                  <div class="flow-step-info">
+                    <h4><i class="fa-solid fa-microchip" style="color: #ef4444;"></i> 1단계: 반도체 & AI 메가트렌드 (삼성전자, SK하이닉스, 소부장)</h4>
+                    <p>글로벌 유동성이 가장 먼저 대거 진입하는 주력 앵커 섹터. SK하이닉스의 HBM 장기계약 및 독점력 + 삼성전자의 실적 숫자의 입증 및 자사주 매입/배당 확대가 주가 밸류에이션 재평가를 견인.</p>
+                    <div class="evidence-tag"><i class="fa-solid fa-database"></i> 노션 DB 데이터 근거: "아직 시장이 못보고 있는 삼전·닉스 주가 전망" (https://youtu.be/lnU78beHI9E), "증권사에 숨기고 있는 삼전·닉스 역대급 호재"</div>
+                    <a href="https://www.youtube.com/watch?v=hEYkWUHN7MA" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 바로가기</a>
+                  </div>
+                </div>
+
+                <div class="flow-step-card">
+                  <div class="flow-step-number" style="background: linear-gradient(135deg, #f59e0b, #334155); box-shadow: 0 4px 10px #f59e0b44;">
+                    2
+                  </div>
+                  <div class="flow-step-info">
+                    <h4><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> 2단계: AI 전력망 인프라 & 원전주 (원전, 전력기기, 에너지)</h4>
+                    <p>AI 데이터센터 폭발에 따른 전력 숏티지(Power Shortage)로 자금이 반도체에서 전력망 인프라 및 원전주로 직접 이동. SMR 및 전력기기 기업의 수주 잔고 급증이 상승 원동력.</p>
+                    <div class="evidence-tag"><i class="fa-solid fa-database"></i> 노션 DB 데이터 근거: "8/2 경제 전망_원전주", "7/31 경제 전망_정책", "지금 바로 써먹는 금, 은, 구리 투자 완벽 정리" (https://youtu.be/kPRQ-CPZeWQ)</div>
+                    <a href="https://youtu.be/kPRQ-CPZeWQ" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 바로가기</a>
+                  </div>
+                </div>
+
+                <div class="flow-step-card">
+                  <div class="flow-step-number" style="background: linear-gradient(135deg, #06b6d4, #334155); box-shadow: 0 4px 10px #06b6d444;">
+                    3
+                  </div>
+                  <div class="flow-step-info">
+                    <h4><i class="fa-solid fa-ship" style="color: #06b6d4;"></i> 3단계: 조선업 & 방산 / 지정학적 인프라 수혜주</h4>
+                    <p>미국 해군 함정 MRO 수주 + 트럼프 정부의 에너지 함대 보유 및 한국 조선업과의 협력 강조에 따른 조선업 및 방산주로 자금 2차 이송.</p>
+                    <div class="evidence-tag"><i class="fa-solid fa-database"></i> 노션 DB 데이터 근거: "앞으로 한국 주식은 이 순서대로 보면 됩니다" (https://youtu.be/69tDuBM7hxk)</div>
+                    <a href="https://youtu.be/69tDuBM7hxk" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 바로가기</a>
+                  </div>
+                </div>
+
+                <div class="flow-step-card">
+                  <div class="flow-step-number" style="background: linear-gradient(135deg, #10b981, #334155); box-shadow: 0 4px 10px #10b98144;">
+                    4
+                  </div>
+                  <div class="flow-step-info">
+                    <h4><i class="fa-solid fa-vault" style="color: #10b981;"></i> 4단계: 고배당 / 주주환원 & 금융 (지주사, 금융, 고배당 ETF)</h4>
+                    <p>순환매 마무리 및 지수 조정 구간에서 벌어들인 현금을 바탕으로 강한 자사주 매입 및 높인 배당을 지급하는 지주사/금융 및 고배당 ETF로 자금 대피.</p>
+                    <div class="evidence-tag"><i class="fa-solid fa-database"></i> 노션 DB 데이터 근거: "미국 주식 1억을 가장 빠르게 불리는 4가지 전략" (https://youtu.be/TJ3uAYxPY5k), "지금 당신에게 필요한 ETF 투자 전략" (https://youtu.be/o-zfLodAY-k)</div>
+                    <a href="https://youtu.be/TJ3uAYxPY5k" target="_blank" class="btn btn-primary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; margin-top: 0.4rem; background: #ef4444;"><i class="fa-brands fa-youtube"></i> 원본 영상 바로가기</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-tab 3 Content: Specific Stock Target Entry Prices & Actionable Plan -->
+        <div class="subtab-content hidden" id="subtabStockTarget">
+          <!-- Advanced Technical Analysis Chart (Fibonacci, Trendlines, Moving Averages, Target Buy Zones) -->
+          <div class="strategy-detail-card" style="padding: 1.5rem; margin-bottom: 1.5rem; background: rgba(15, 23, 42, 0.85);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                  <span class="db-tag" style="background: #ef444422; color: #ef4444; border: 1px solid #ef444444; font-size: 0.75rem;">
+                    기술적 분석 & 피보나치 차트
+                  </span>
+                  <h3 id="chartHeaderTitle" style="font-size: 1.35rem; font-weight: 800; color: #f8fafc;">
+                    삼성전자 (005930.KS)
+                  </h3>
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 0.6rem; margin-top: 0.3rem;">
+                  <span id="chartHeaderPrice" style="font-size: 1.5rem; font-weight: 800; color: #38bdf8;">271,000 원</span>
+                  <span id="chartHeaderChange" style="font-size: 0.9rem; font-weight: 700; color: #10b981;">+23,500원 (+9.49%)</span>
+                  <span style="font-size: 0.78rem; color: #94a3b8;">(TradingView 실시간 시세 연동)</span>
+                </div>
+              </div>
+
+              <!-- Stock Selector Buttons (대형 버튼) -->
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn btn-secondary chart-sym-btn active" data-sym="KRX:005930" onclick="switchChartSymbol('KRX:005930')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; background: rgba(59, 130, 246, 0.3); border-color: #60a5fa; color: #fff; border-radius: 8px;">삼성전자</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:006660" onclick="switchChartSymbol('KRX:006660')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">SK하이닉스</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:028050" onclick="switchChartSymbol('KRX:028050')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">두산에너빌</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:005380" onclick="switchChartSymbol('KRX:005380')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">현대차</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:329180" onclick="switchChartSymbol('KRX:329180')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">HD현대중공업</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:105560" onclick="switchChartSymbol('KRX:105560')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">KB금융</button>
+                <button class="btn btn-secondary chart-sym-btn" data-sym="KRX:KOSPI" onclick="switchChartSymbol('KRX:KOSPI')" style="padding: 0.55rem 1.1rem; font-size: 0.92rem; font-weight: 800; border-radius: 8px;">코스피 지수</button>
+              </div>
+            </div>
+
+            <!-- Canvas Chart Graphic (대형 고해상도 680px) -->
+            <div style="position: relative; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); background: #0b1329; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+              <canvas id="technicalAnalysisCanvas" style="display: block; width: 100%; height: 680px; cursor: crosshair;"></canvas>
+            </div>
+
+            <!-- Chart Analysis Summary Box (대형 브리핑 박스) -->
+            <div id="chartAnalysisSummary" style="margin-top: 1.2rem; background: rgba(30, 41, 59, 0.85); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 1.2rem; font-size: 0.95rem; color: #f1f5f9; line-height: 1.7; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+              <!-- Dynamically updated -->
+            </div>
+          </div>
+
+          <div class="strategy-detail-card" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.8rem;">
+              <div>
+                <h3 style="font-size: 1.2rem; color: #f87171; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-crosshair"></i> 실전 어디에 어떤 종목을 얼마에 들어갈까? (TradingView 기준 실전 매수가)
+                </h3>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.2rem;">
+                  트레이딩뷰 실시간 시세(삼성전자 27만원선, 코스피 6,800선 지지) 및 노션 299개 수집 데이터 분석을 결합하여 산출한 1차/2차 권장 진입 가격대입니다.
+                </p>
+              </div>
+              <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                TradingView 실시간 반영
+              </span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.2rem;" id="stockRecommendationsGrid">
+              <!-- Stock Target Cards dynamically rendered here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- YouTube Video Insights Grid inside Strategy Tab -->
+        <div style="margin-top: 2.5rem;">
+          <div class="modal-section-title" style="font-size: 1.1rem; color: var(--accent-light); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fa-brands fa-youtube"></i> 수집된 노션 영상별 Gemini Pro 심층 분석 리포트 카드</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">전체 노션 299개 DB 타임스탬프 분석 탑재</span>
+          </div>
+          <div class="video-insights-grid" id="videoInsightsGrid"></div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Notion Live Sync Dashboard &copy; 2026 | Powered by Notion REST API & Google Gemini Pro</p>
+      <div class="footer-links">
+        <span id="lastUpdated">마지막 업데이트: --:--:--</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Detail Modal for Page Body Content -->
+  <div class="modal-overlay hidden" id="detailModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge" id="modalBadge">경제흐름</span>
+          <h2 class="modal-title" id="modalTitle">페이지 상세 내용</h2>
+        </div>
+        <button class="modal-close" id="modalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>노션 본문 내용을 읽어오는 중입니다...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="chart-engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
